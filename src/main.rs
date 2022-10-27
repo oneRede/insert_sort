@@ -60,7 +60,7 @@ impl<'a> InsertionSort {
                         next: None,
                         up: None,
                     });
-                    header = add_up(header, node);
+                    header = Node::add_up(header, node);
                     break 'outer;
                 } else if data[i] < unsafe { (*header.as_ptr()).data }
                     && unsafe { (*header.as_ptr()).next } != None
@@ -72,7 +72,7 @@ impl<'a> InsertionSort {
                         next: None,
                         up: None,
                     });
-                    header = add_next(header, node);
+                    header = Node::add_next(header, node);
                     loop {
                         if unsafe { (*header.as_ptr()).up } != None {
                             header = (unsafe { (*header.as_ptr()).up }).unwrap();
@@ -103,84 +103,22 @@ impl Node {
         }
     }
 
-    fn add_next(&mut self, node: &mut Node) -> &mut Self {
-        node.next = self.next;
-        let next = NonNull::new(node as *mut Node);
-        self.next = next;
-        let up = NonNull::new(self as *mut Node);
-        node.up = up;
-        self
-    }
-
-    fn add_new_v2(&mut self, mut node: Box<Node>) {
-        let up = NonNull::new(self as *mut Node);
-        node.up = up;
+    fn add_next(header: NonNull<Node>, node: Box<Node>) -> NonNull<Node> {
         let new_node: NonNull<Node> = Box::leak(node).into();
-        self.next = Some(new_node);
-    }
-
-    fn add_up(&mut self, node: &mut Node) -> &mut Self {
-        match self.up {
-            Some(up) => {
-                node.next = NonNull::new(self as *mut Node);
-                let up = NonNull::new(node as *mut Node);
-                unsafe { (*self.up.unwrap().as_ptr()).next = up }
-                self
-            }
-            None => {
-                node.up = None;
-                self.up = NonNull::new(node as *mut Node);
-                node.next = NonNull::new(self as *mut Node);
-                self
-            }
+        unsafe {
+            (*new_node.as_ptr()).up = Some(header);
+            (*header.as_ptr()).next = Some(new_node);
+            header
         }
     }
-
-    fn get_header(mut self) -> Node {
-        loop {
-            if self.up != None {
-                self = unsafe { *(self.up.unwrap().as_ref()) };
-            } else {
-                return self;
-            }
+    
+    fn add_up(header: NonNull<Node>, node: Box<Node>) -> NonNull<Node>{
+        let new_node: NonNull<Node> = Box::leak(node).into();
+        unsafe {
+            (*header.as_ptr()).up = Some(new_node);
+            (*new_node.as_ptr()).next = Some(header);
+            new_node
         }
-    }
-
-    fn get_next(&self) -> Node {
-        unsafe { (*self.next.unwrap().as_ref()) }
-    }
-
-    fn test_leak(&mut self, mut node: Box<Node>) {
-        let node = Some(Box::leak(node));
-    }
-}
-
-fn get_header(mut node: Node) -> Node {
-    println!("{:?}", node);
-    loop {
-        if node.up != None {
-            node = unsafe { (*node.up.unwrap().as_ref()) };
-        } else {
-            return node;
-        }
-    }
-}
-
-fn add_next(header: NonNull<Node>, node: Box<Node>) -> NonNull<Node> {
-    let new_node: NonNull<Node> = Box::leak(node).into();
-    unsafe {
-        (*new_node.as_ptr()).up = Some(header);
-        (*header.as_ptr()).next = Some(new_node);
-        header
-    }
-}
-
-fn add_up(header: NonNull<Node>, node: Box<Node>) -> NonNull<Node>{
-    let new_node: NonNull<Node> = Box::leak(node).into();
-    unsafe {
-        (*header.as_ptr()).up = Some(new_node);
-        (*new_node.as_ptr()).next = Some(header);
-        new_node
     }
 }
 
