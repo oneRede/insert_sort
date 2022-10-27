@@ -1,4 +1,4 @@
-use std::{ptr::NonNull};
+use std::ptr::NonNull;
 
 #[derive(Debug)]
 struct InsertionSort {
@@ -84,7 +84,7 @@ impl<'a> InsertionSort {
                 }
             }
         }
-        unsafe { (*header.as_ptr()) }
+        unsafe { *header.as_ptr() }
     }
 }
 #[derive(Debug, Copy, Clone)]
@@ -95,6 +95,7 @@ struct Node {
 }
 
 impl Node {
+    #[allow(dead_code)]
     fn new(data: u32) -> Self {
         Self {
             data: data,
@@ -111,8 +112,8 @@ impl Node {
             header
         }
     }
-    
-    fn add_up(header: NonNull<Node>, node: Box<Node>) -> NonNull<Node>{
+
+    fn add_up(header: NonNull<Node>, node: Box<Node>) -> NonNull<Node> {
         let new_node: NonNull<Node> = Box::leak(node).into();
         unsafe {
             (*header.as_ptr()).up = Some(new_node);
